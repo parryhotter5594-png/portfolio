@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { 
   PERSONAL_INFO as INITIAL_INFO, 
   EXPERIENCE as INITIAL_EXP, 
@@ -54,21 +54,68 @@ interface ContentContextType {
 
   sectionVisibility: SectionVisibility;
   toggleSectionVisibility: (section: keyof SectionVisibility) => void;
+
+  resetAllData: () => void;
+  generateConstantsFile: () => string;
 }
 
 const ContentContext = createContext<ContentContextType | undefined>(undefined);
 
+// Helper to load from LocalStorage
+const loadFromStorage = <T,>(key: string, initialValue: T): T => {
+  try {
+    const saved = localStorage.getItem(`portfolio_${key}`);
+    if (saved) {
+      return JSON.parse(saved);
+    }
+  } catch (e) {
+    console.error("Failed to load from local storage", e);
+  }
+  return initialValue;
+};
+
 export const ContentProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [isAdmin, setIsAdmin] = useState(false);
-  const [personalInfo, setPersonalInfo] = useState(INITIAL_INFO);
-  const [experience, setExperience] = useState<Job[]>(INITIAL_EXP);
-  const [projects, setProjects] = useState<Project[]>(INITIAL_PROJ);
-  const [stats, setStats] = useState(INITIAL_STATS);
-  const [skills, setSkills] = useState<SkillGroup[]>(INITIAL_SKILLS);
-  const [education, setEducation] = useState<Education>(INITIAL_EDUCATION);
-  const [engineeringScale, setEngineeringScale] = useState<EngineeringScale>(INITIAL_ENG_SCALE);
-  const [testimonials, setTestimonials] = useState<Testimonial[]>(INITIAL_TESTIMONIALS);
-  const [sectionVisibility, setSectionVisibility] = useState<SectionVisibility>(INITIAL_VISIBILITY);
+  
+  // Initialize states with LocalStorage data or Fallback to Constants
+  const [personalInfo, setPersonalInfo] = useState(() => loadFromStorage('personalInfo', INITIAL_INFO));
+  const [experience, setExperience] = useState<Job[]>(() => loadFromStorage('experience', INITIAL_EXP));
+  const [projects, setProjects] = useState<Project[]>(() => loadFromStorage('projects', INITIAL_PROJ));
+  const [skills, setSkills] = useState<SkillGroup[]>(() => loadFromStorage('skills', INITIAL_SKILLS));
+  const [education, setEducation] = useState<Education>(() => loadFromStorage('education', INITIAL_EDUCATION));
+  const [engineeringScale, setEngineeringScale] = useState<EngineeringScale>(() => loadFromStorage('engineeringScale', INITIAL_ENG_SCALE));
+  const [testimonials, setTestimonials] = useState<Testimonial[]>(() => loadFromStorage('testimonials', INITIAL_TESTIMONIALS));
+  const [sectionVisibility, setSectionVisibility] = useState<SectionVisibility>(() => loadFromStorage('sectionVisibility', INITIAL_VISIBILITY));
+
+  // Special handling for Stats because they contain React Nodes (icons) which cannot be stringified
+  const [stats, setStats] = useState(() => {
+    const savedStats = loadFromStorage('stats_data', null);
+    if (savedStats) {
+      // Merge saved data (value/label) with initial icons
+      return INITIAL_STATS.map((stat, index) => ({
+        ...stat,
+        ...(savedStats[index] || {})
+      }));
+    }
+    return INITIAL_STATS;
+  });
+
+  // --- Persistence Effects ---
+  useEffect(() => { localStorage.setItem('portfolio_personalInfo', JSON.stringify(personalInfo)); }, [personalInfo]);
+  useEffect(() => { localStorage.setItem('portfolio_experience', JSON.stringify(experience)); }, [experience]);
+  useEffect(() => { localStorage.setItem('portfolio_projects', JSON.stringify(projects)); }, [projects]);
+  useEffect(() => { localStorage.setItem('portfolio_skills', JSON.stringify(skills)); }, [skills]);
+  useEffect(() => { localStorage.setItem('portfolio_education', JSON.stringify(education)); }, [education]);
+  useEffect(() => { localStorage.setItem('portfolio_engineeringScale', JSON.stringify(engineeringScale)); }, [engineeringScale]);
+  useEffect(() => { localStorage.setItem('portfolio_testimonials', JSON.stringify(testimonials)); }, [testimonials]);
+  useEffect(() => { localStorage.setItem('portfolio_sectionVisibility', JSON.stringify(sectionVisibility)); }, [sectionVisibility]);
+  
+  // Save only the data parts of stats, not the icons
+  useEffect(() => { 
+    const statsData = stats.map(({ label, value }) => ({ label, value }));
+    localStorage.setItem('portfolio_stats_data', JSON.stringify(statsData)); 
+  }, [stats]);
+
 
   const toggleAdmin = (force?: boolean) => {
     if (typeof force === 'boolean') {
@@ -76,6 +123,44 @@ export const ContentProvider: React.FC<{ children: ReactNode }> = ({ children })
     } else {
       setIsAdmin(prev => !prev);
     }
+  };
+
+  const resetAllData = () => {
+    if (window.confirm("Are you sure? This will reset all your local edits to the original default code.")) {
+      localStorage.clear();
+      window.location.reload();
+    }
+  };
+
+  const generateConstantsFile = () => {
+    const fileContent = `
+import { Job, Project, SkillGroup, Education, EngineeringScale, Testimonial, SectionVisibility } from './types';
+import { Linkedin, Mail, Globe, Printer, Cpu, Code, Factory } from 'lucide-react';
+
+export const PERSONAL_INFO = ${JSON.stringify(personalInfo, null, 2)};
+
+export const STATS = [
+  { label: "${stats[0].label}", value: "${stats[0].value}", icon: <Factory className="w-6 h-6" /> },
+  { label: "${stats[1].label}", value: "${stats[1].value}", icon: <Printer className="w-6 h-6" /> },
+  { label: "${stats[2].label}", value: "${stats[2].value}", icon: <Cpu className="w-6 h-6" /> },
+  { label: "${stats[3].label}", value: "${stats[3].value}", icon: <Code className="w-6 h-6" /> },
+];
+
+export const EXPERIENCE: Job[] = ${JSON.stringify(experience, null, 2)};
+
+export const PROJECTS: Project[] = ${JSON.stringify(projects, null, 2)};
+
+export const SKILLS: SkillGroup[] = ${JSON.stringify(skills, null, 2)};
+
+export const EDUCATION: Education = ${JSON.stringify(education, null, 2)};
+
+export const ENGINEERING_SCALE: EngineeringScale = ${JSON.stringify(engineeringScale, null, 2)};
+
+export const TESTIMONIALS: Testimonial[] = ${JSON.stringify(testimonials, null, 2)};
+
+export const INITIAL_VISIBILITY: SectionVisibility = ${JSON.stringify(sectionVisibility, null, 2)};
+    `;
+    return fileContent;
   };
 
   const updatePersonalInfo = (key: keyof typeof INITIAL_INFO, value: string) => {
@@ -218,7 +303,8 @@ export const ContentProvider: React.FC<{ children: ReactNode }> = ({ children })
       education, updateEducation,
       engineeringScale, updateEngineeringScale,
       testimonials, updateTestimonial, addTestimonial, removeTestimonial,
-      sectionVisibility, toggleSectionVisibility
+      sectionVisibility, toggleSectionVisibility,
+      resetAllData, generateConstantsFile
     }}>
       {children}
     </ContentContext.Provider>

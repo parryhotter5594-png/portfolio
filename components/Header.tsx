@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Menu, X, Moon, Sun, Download, ShieldAlert, FileText, Link } from 'lucide-react';
+import { Menu, X, Moon, Sun, Download, ShieldAlert, FileText, Link, Copy, RotateCcw } from 'lucide-react';
 import { useContent } from '../context/ContentContext';
 import { SectionVisibility } from '../types';
 
@@ -12,7 +12,8 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ darkMode, toggleDarkMode }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { isAdmin, toggleAdmin, personalInfo, updatePersonalInfo, sectionVisibility } = useContent();
+  const { isAdmin, toggleAdmin, personalInfo, updatePersonalInfo, sectionVisibility, resetAllData, generateConstantsFile } = useContent();
+  const [copySuccess, setCopySuccess] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -33,8 +34,6 @@ const Header: React.FC<HeaderProps> = ({ darkMode, toggleDarkMode }) => {
 
   // Filter links based on visibility
   const navLinks = allNavLinks.filter(link => {
-    // If it's the 'about' section (Hero), we generally keep it or check 'about' visibility
-    // If the ID exists in sectionVisibility, use that value. Default to true.
     const key = link.id as keyof SectionVisibility;
     return sectionVisibility[key] !== false;
   });
@@ -64,6 +63,15 @@ const Header: React.FC<HeaderProps> = ({ darkMode, toggleDarkMode }) => {
     if (e.detail === 4) {
       toggleAdmin();
     }
+  };
+
+  const handleCopyData = () => {
+    const data = generateConstantsFile();
+    navigator.clipboard.writeText(data).then(() => {
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+      alert("Configuration Copied!\n\nTo make these changes permanent for everyone:\n1. Open 'constants.tsx' in your code.\n2. Paste this content over the entire file.\n3. Push to GitHub.");
+    });
   };
 
   return (
@@ -163,10 +171,24 @@ const Header: React.FC<HeaderProps> = ({ darkMode, toggleDarkMode }) => {
         </div>
       </div>
       
-      {/* Admin Mode Indicator for Mobile/Feedback */}
+      {/* Admin Toolbar */}
       {isAdmin && (
-        <div className="bg-red-500 text-white text-xs font-bold text-center py-1 absolute bottom-0 left-0 right-0 transform translate-y-full">
-          ADMIN MODE ACTIVE
+        <div className="bg-slate-800 text-white text-xs font-bold py-2 px-4 shadow-lg absolute bottom-0 left-0 right-0 transform translate-y-full flex justify-between items-center flex-wrap gap-2">
+          <span>ADMIN MODE ACTIVE - CHANGES SAVED LOCALLY</span>
+          <div className="flex gap-2">
+            <button 
+              onClick={handleCopyData}
+              className={`flex items-center gap-1 px-3 py-1 rounded transition-colors ${copySuccess ? 'bg-green-600' : 'bg-primary-600 hover:bg-primary-500'}`}
+            >
+              <Copy size={12} /> {copySuccess ? 'COPIED!' : 'COPY DATA TO CODE'}
+            </button>
+            <button 
+              onClick={resetAllData}
+              className="flex items-center gap-1 bg-red-600 hover:bg-red-500 px-3 py-1 rounded transition-colors"
+            >
+              <RotateCcw size={12} /> RESET ALL
+            </button>
+          </div>
         </div>
       )}
 
@@ -193,14 +215,20 @@ const Header: React.FC<HeaderProps> = ({ darkMode, toggleDarkMode }) => {
           </a>
           
           {isAdmin && (
-            <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-lg">
-               <label className="text-xs font-bold text-slate-500 block mb-1">Edit Resume URL</label>
-               <input 
-                 type="text" 
-                 value={personalInfo.resumeUrl}
-                 onChange={(e) => updatePersonalInfo('resumeUrl', e.target.value)}
-                 className="w-full text-sm p-2 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900"
-               />
+            <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-lg space-y-3">
+               <div>
+                <label className="text-xs font-bold text-slate-500 block mb-1">Edit Resume URL</label>
+                <input 
+                  type="text" 
+                  value={personalInfo.resumeUrl}
+                  onChange={(e) => updatePersonalInfo('resumeUrl', e.target.value)}
+                  className="w-full text-sm p-2 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900"
+                />
+               </div>
+               <div className="flex gap-2">
+                 <button onClick={handleCopyData} className="flex-1 bg-primary-600 text-white py-2 rounded text-xs">COPY DATA</button>
+                 <button onClick={resetAllData} className="flex-1 bg-red-600 text-white py-2 rounded text-xs">RESET</button>
+               </div>
             </div>
           )}
         </div>
