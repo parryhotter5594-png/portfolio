@@ -12,6 +12,7 @@ import {
   INITIAL_VISIBILITY
 } from '../constants';
 import { Job, Project, SkillGroup, Education, EngineeringScale, Testimonial, SectionVisibility } from '../types';
+import { Layers, Activity, FlaskConical, Factory, Users } from 'lucide-react';
 
 interface ContentContextType {
   isAdmin: boolean;
@@ -64,7 +65,7 @@ const ContentContext = createContext<ContentContextType | undefined>(undefined);
 // Helper to load from LocalStorage
 const loadFromStorage = <T,>(key: string, initialValue: T): T => {
   try {
-    const saved = localStorage.getItem(`portfolio_${key}`);
+    const saved = localStorage.getItem(`portfolio_v3_${key}`);
     if (saved) {
       return JSON.parse(saved);
     }
@@ -101,19 +102,19 @@ export const ContentProvider: React.FC<{ children: ReactNode }> = ({ children })
   });
 
   // --- Persistence Effects ---
-  useEffect(() => { localStorage.setItem('portfolio_personalInfo', JSON.stringify(personalInfo)); }, [personalInfo]);
-  useEffect(() => { localStorage.setItem('portfolio_experience', JSON.stringify(experience)); }, [experience]);
-  useEffect(() => { localStorage.setItem('portfolio_projects', JSON.stringify(projects)); }, [projects]);
-  useEffect(() => { localStorage.setItem('portfolio_skills', JSON.stringify(skills)); }, [skills]);
-  useEffect(() => { localStorage.setItem('portfolio_education', JSON.stringify(education)); }, [education]);
-  useEffect(() => { localStorage.setItem('portfolio_engineeringScale', JSON.stringify(engineeringScale)); }, [engineeringScale]);
-  useEffect(() => { localStorage.setItem('portfolio_testimonials', JSON.stringify(testimonials)); }, [testimonials]);
-  useEffect(() => { localStorage.setItem('portfolio_sectionVisibility', JSON.stringify(sectionVisibility)); }, [sectionVisibility]);
+  useEffect(() => { localStorage.setItem('portfolio_v3_personalInfo', JSON.stringify(personalInfo)); }, [personalInfo]);
+  useEffect(() => { localStorage.setItem('portfolio_v3_experience', JSON.stringify(experience)); }, [experience]);
+  useEffect(() => { localStorage.setItem('portfolio_v3_projects', JSON.stringify(projects)); }, [projects]);
+  useEffect(() => { localStorage.setItem('portfolio_v3_skills', JSON.stringify(skills)); }, [skills]);
+  useEffect(() => { localStorage.setItem('portfolio_v3_education', JSON.stringify(education)); }, [education]);
+  useEffect(() => { localStorage.setItem('portfolio_v3_engineeringScale', JSON.stringify(engineeringScale)); }, [engineeringScale]);
+  useEffect(() => { localStorage.setItem('portfolio_v3_testimonials', JSON.stringify(testimonials)); }, [testimonials]);
+  useEffect(() => { localStorage.setItem('portfolio_v3_sectionVisibility', JSON.stringify(sectionVisibility)); }, [sectionVisibility]);
   
   // Save only the data parts of stats, not the icons
   useEffect(() => { 
     const statsData = stats.map(({ label, value }) => ({ label, value }));
-    localStorage.setItem('portfolio_stats_data', JSON.stringify(statsData)); 
+    localStorage.setItem('portfolio_v3_stats_data', JSON.stringify(statsData)); 
   }, [stats]);
 
 
@@ -135,15 +136,15 @@ export const ContentProvider: React.FC<{ children: ReactNode }> = ({ children })
   const generateConstantsFile = () => {
     const fileContent = `
 import { Job, Project, SkillGroup, Education, EngineeringScale, Testimonial, SectionVisibility } from './types';
-import { Linkedin, Mail, Globe, Printer, Cpu, Code, Factory } from 'lucide-react';
+import { Linkedin, Mail, Globe, Layers, Activity, FlaskConical, Factory, Users } from 'lucide-react';
 
 export const PERSONAL_INFO = ${JSON.stringify(personalInfo, null, 2)};
 
 export const STATS = [
   { label: "${stats[0].label}", value: "${stats[0].value}", icon: <Factory className="w-6 h-6" /> },
-  { label: "${stats[1].label}", value: "${stats[1].value}", icon: <Printer className="w-6 h-6" /> },
-  { label: "${stats[2].label}", value: "${stats[2].value}", icon: <Cpu className="w-6 h-6" /> },
-  { label: "${stats[3].label}", value: "${stats[3].value}", icon: <Code className="w-6 h-6" /> },
+  { label: "${stats[1].label}", value: "${stats[1].value}", icon: <Layers className="w-6 h-6" /> },
+  { label: "${stats[2].label}", value: "${stats[2].value}", icon: <Activity className="w-6 h-6" /> },
+  { label: "${stats[3].label}", value: "${stats[3].value}", icon: <Users className="w-6 h-6" /> },
 ];
 
 export const EXPERIENCE: Job[] = ${JSON.stringify(experience, null, 2)};

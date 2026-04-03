@@ -73,6 +73,27 @@ const Contact: React.FC = () => {
           />
         </p>
 
+        <div className="grid sm:grid-cols-2 gap-4 max-w-2xl mx-auto mb-10 text-left">
+          <div className="bg-slate-800/50 backdrop-blur-sm p-4 rounded-lg border border-slate-700">
+            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-1">Languages</h3>
+            <p className="text-slate-200 font-medium">
+              <Editable 
+                value={personalInfo.languages} 
+                onSave={(val) => updatePersonalInfo('languages', val)} 
+              />
+            </p>
+          </div>
+          <div className="bg-slate-800/50 backdrop-blur-sm p-4 rounded-lg border border-slate-700">
+            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-1">Visa / Availability</h3>
+            <p className="text-slate-200 font-medium">
+              <Editable 
+                value={personalInfo.visa} 
+                onSave={(val) => updatePersonalInfo('visa', val)} 
+              />
+            </p>
+          </div>
+        </div>
+
         <div className="flex flex-col sm:flex-row justify-center items-center gap-6">
           <a 
             href={`mailto:${personalInfo.email}`}

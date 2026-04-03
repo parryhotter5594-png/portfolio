@@ -146,7 +146,7 @@ const Hero: React.FC = () => {
                 <img 
                   src={personalInfo.heroImage} 
                   alt="Industrial Additive Manufacturing" 
-                  fetchPriority="high"
+                  fetchpriority="high"
                   loading="eager"
                   className="w-full h-[500px] object-cover transform group-hover:scale-105 transition-transform duration-[2s]"
                 />
